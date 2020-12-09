@@ -117,10 +117,10 @@ for x in range(data.size):
         if deltaFluctuation > kSafeFluctuation * coup_limit:
             if (prev_BESS_status == True):
                 coup = coup - deltaCurFluctuation + (kSafeFluctuation * coup_limit/3) # во время зарядки вычесть разницу и прибавить допустимое значение
-                outData[x] = outData[x] + (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
+                outData[x] = outData[x] + (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T # эта строчка под вопросом я не умею считать но вроде по уму
             else:
                 coup = coup + deltaCurFluctuation - (kSafeFluctuation * coup_limit/3) # наоборот во время разрядки
-                outData[x] = outData[x] - (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
+                outData[x] = outData[x] - (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T # эта строчка под вопросом я не умею считать но вроде по уму
     
     if coup < 0:
         delta_coup=coup
@@ -131,8 +131,7 @@ for x in range(data.size):
 
     coup_ar[x] = coup
     if (coup_ar[x] < 0):
-        raise IOError('coup < 0'
-    )
+        raise IOError('coup < 0')
     BESS_value = coup / coup_limit
     
     
