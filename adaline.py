@@ -111,15 +111,16 @@ for x in range(data.size):
     #     BESS_status = False
     
     
-    deltaFluctuation = abs(coup - coup_ar[x - 3])
-    deltaCurFluctuation = abs(coup - coup_ar[x - 1])
-    if deltaFluctuation > kSafeFluctuation * coup_limit:
-        if (prev_BESS_status == True):
-            coup = coup - deltaCurFluctuation + (kSafeFluctuation * coup_limit/3) # во время зарядки вычесть разницу и прибавить допустимое значение
-            outData[x] = outData[x] + (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
-        else:
-            coup = coup + deltaCurFluctuation - (kSafeFluctuation * coup_limit/3) # наоборот во время разрядки
-            outData[x] = outData[x] - (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
+    if (x>2):
+        deltaFluctuation = max(abs(coup - coup_ar[x - 3]), abs(coup - coup_ar[x - 2]), abs(coup - coup_ar[x - 1]))
+        deltaCurFluctuation = abs(coup - coup_ar[x - 1])
+        if deltaFluctuation > kSafeFluctuation * coup_limit:
+            if (prev_BESS_status == True):
+                coup = coup - deltaCurFluctuation + (kSafeFluctuation * coup_limit/3) # во время зарядки вычесть разницу и прибавить допустимое значение
+                outData[x] = outData[x] + (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
+            else:
+                coup = coup + deltaCurFluctuation - (kSafeFluctuation * coup_limit/3) # наоборот во время разрядки
+                outData[x] = outData[x] - (deltaCurFluctuation - (kSafeFluctuation * coup_limit/3)) * 60 / T
     
     if coup < 0:
         delta_coup=coup
