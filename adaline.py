@@ -47,8 +47,11 @@ BESS_limit=1500000 # МВт*ч изначальная версия предел�
 BESS_status=True # True зарядка False разрядка
 BESS_value=0.3 #Уровень зарядки
 
-prev_BESS_status=BESS_status
-for x in range(data.size):
+prev_BESS_status = BESS_status
+
+for x in range(data.size): 
+    
+    
     t = times[x]
     for k in range(numberOfIn):
         x_ar[2 * k] = np.cos(t * k * omg)
@@ -77,7 +80,7 @@ for x in range(data.size):
 
         elif BESS_value > 0.6 and BESS_value <= 1:
             plus_coup=(1-BESS_value)*((outData[x] - data[x]) * T / 60)
-            coup += (1-BESS_value)*((outData[x] - data[x]) * T / 60)
+            coup += plus_coup
             outData[x] = outData[x] - plus_coup*60/T
         else:
             raise IOError('BESS value > 1 | < 0 при зарядке')
@@ -109,7 +112,6 @@ for x in range(data.size):
     # if BESS_value > 1:
     #     BESS_value = 1
     #     BESS_status = False
-    
     
     if (x>2):
         deltaFluctuation = max(abs(coup - coup_ar[x - 3]), abs(coup - coup_ar[x - 2]), abs(coup - coup_ar[x - 1]))
