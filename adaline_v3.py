@@ -42,6 +42,7 @@ wp1 = np.zeros(3)
 
 BESS_status = True  # True зарядка False разрядка
 BESS_value = coup/coup_limit # Уровень зарядки
+BESS_status_log=np.zeros(data.size)
 
 prev_BESS_status = BESS_status
 for x in range(data.size):
@@ -52,10 +53,10 @@ for x in range(data.size):
 
     x_ar[2 * numberOfIn] = 1
     f_k = np.dot(weights, x_ar)
-
+    outData[x] = np.dot(weights, x_ar)
     weights = weights + alf * (data[x] - f_k) * x_ar / (np.dot(x_ar, x_ar) + lumb)
 
-    outData[x] = np.dot(weights, x_ar)
+    
 
     if len(pfmc) < 4:
         pfmc.append(outData[x])
@@ -94,7 +95,7 @@ for x in range(data.size):
 
         elif BESS_value > 0.6 and BESS_value <= 1:
             plus_coup = (1 - (1/0.6)*BESS_value) * ((outData[x] - data[x]) * T / 60)
-            newOutData = outData[x] - plus_coup * 60 / T
+            newOutData = outData[x] + plus_coup * 60 / T
             if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
                 coup += plus_coup
                 outData[x] = newOutData
@@ -110,7 +111,7 @@ for x in range(data.size):
         if BESS_value <= 0.2:
             plus_coup = (1 - 5 * BESS_value) * (outData[x] - data[x]) * T / 60
             
-            newOutData = outData[x] - plus_coup * 60 / T
+            newOutData = outData[x] + plus_coup * 60 / T
             if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
                 coup += plus_coup
                 outData[x] = newOutData
@@ -132,48 +133,51 @@ for x in range(data.size):
     saveBatteryLimit = False
     print(coup, coup_ar[x - 1])
     prev_BESS_status = BESS_status
-    if coup <= coup_ar[x-1] and BESS_status == True:
+    
+
+    prev_BESS_value = BESS_value
+    BESS_value = coup / coup_limit
+    if prev_BESS_value < BESS_value and BESS_status == True:
         BESS_status = False
-    if coup >= coup_ar[x-1] and BESS_status == False:
+    elif prev_BESS_value > BESS_value and BESS_status == False:
         BESS_status = True
 
 
-
-
-
-    # if (x > 2) and not limitPower and not saveBatteryLimit and outData[x]>0:
-    #     deltaFluctuation = max(abs(coup - coup_ar[x - 3]), abs(coup - coup_ar[x - 2]), abs(coup - coup_ar[x - 1]))
-    #     deltaCurFluctuation = abs(coup - coup_ar[x - 1])
-    #     if deltaFluctuation > kSafeFluctuation * coup_limit:
-    #         if (prev_BESS_status == True):
-    #             curDeltaCoup = deltaCurFluctuation + (kSafeFluctuation * coup_limit/3)
-    #             newOutData = outData[x] + curDeltaCoup * 60 / T
-    #             if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
-    #                 coup += curDeltaCoup
-    #                 outData[x] = newOutData
-    #         else:
-    #             curDeltaCoup = deltaCurFluctuation + (kSafeFluctuation * coup_limit/3)
-    #             newOutData = outData[x] - curDeltaCoup * 60 / T
-    #             if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
-    #                 coup += curDeltaCoup
-    #                 outData[x] = newOutData
+    if (x > 2) and not limitPower and not saveBatteryLimit and outData[x]>0:
+        deltaFluctuation = max(abs(coup - coup_ar[x - 3]), abs(coup - coup_ar[x - 2]), abs(coup - coup_ar[x - 1]))
+        deltaCurFluctuation = abs(coup - coup_ar[x - 1])
+        if deltaFluctuation > kSafeFluctuation * coup_limit:
+            if (prev_BESS_status == True):
+                curDeltaCoup = deltaCurFluctuation + (kSafeFluctuation * coup_limit/3)
+                newOutData = outData[x] + curDeltaCoup * 60 / T
+                if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
+                    coup += curDeltaCoup
+                    outData[x] = newOutData
+            else:
+                curDeltaCoup = deltaCurFluctuation + (kSafeFluctuation * coup_limit/3)
+                newOutData = outData[x] - curDeltaCoup * 60 / T
+                if not (newOutData > pH30 or newOutData < pL30) and newOutData>0:
+                    coup += curDeltaCoup
+                    outData[x] = newOutData
     if coup < 0 or coup > coup_limit:
         print('coup<0')
         coup = oldCoup
         outData[x] = oldOutData
-    BESS_value = coup / coup_limit
     
+    
+
     if (BESS_value > 1 or BESS_value < 0):
         print(coup, 'coup', coup_limit, 'coup limit', BESS_value, 'BESS value', prev_BESS_status, 'prev BESS STATUS')
         #raise IOError('BESS жопа')
     coup_ar[x] = coup
     
-
+    
     # if (outData[x] != outData2[x]):
         # print(BESS_status, BESS_value, coup, outData[x], outData2[x], outData[x]-outData2[x])
     BESS_values[x] = BESS_value * 100
     power += (outData[x]-data[x])*T/60
     outData2[x] = power
+    BESS_status_log[x]=BESS_status*100
 
 # plt.plot(times, outData, label='coup')
 # plt.plot(times, outData2, label='coup')
@@ -191,6 +195,7 @@ plt.show()
 fig, ax = plt.subplots()
 ax.plot(times, coup_ar, label='coup')
 ax.plot(times, BESS_values, label='BESS')
+
 
 ax.legend()
 
